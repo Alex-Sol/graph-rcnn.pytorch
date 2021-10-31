@@ -40,18 +40,21 @@ def test(cfg, args, model=None):
 def main():
     ''' parse config file '''
     parser = argparse.ArgumentParser(description="Scene Graph Generation")
-    parser.add_argument("--config-file", default="configs/baseline_res101.yaml")
-    parser.add_argument("--local_rank", type=int, default=0)
+    parser.add_argument("--config-file", default="configs/faster_rcnn_res101.yaml")
+    parser.add_argument("--local_rank", type=int, default=1)
     parser.add_argument("--session", type=int, default=0)
-    parser.add_argument("--resume", type=int, default=0)
+    parser.add_argument("--resume", type=int, default=1)
     parser.add_argument("--batchsize", type=int, default=0)
-    parser.add_argument("--inference", action='store_true')
+    parser.add_argument("--inference", action='store_true', default=True)
     parser.add_argument("--instance", type=int, default=-1)
     parser.add_argument("--use_freq_prior", action='store_true')
-    parser.add_argument("--visualize", action='store_true')
+    parser.add_argument("--visualize", action='store_true', default=True)
     parser.add_argument("--algorithm", type=str, default='sg_baseline')
+    parser.add_argument("--epoch", type=int, default=100)
     args = parser.parse_args()
 
+    gpu_ids = "1, 2, 3"
+    os.environ['CUDA_VISIBLE_DEVICES'] = gpu_ids
     num_gpus = int(os.environ["WORLD_SIZE"]) if "WORLD_SIZE" in os.environ else 1
     args.distributed = num_gpus > 1
     if args.distributed:
@@ -65,6 +68,7 @@ def main():
     cfg.resume = args.resume
     cfg.instance = args.instance
     cfg.inference = args.inference
+    cfg.epoch = args.epoch
     cfg.MODEL.USE_FREQ_PRIOR = args.use_freq_prior
     cfg.MODEL.ALGORITHM = args.algorithm
     if args.batchsize > 0:

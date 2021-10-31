@@ -67,6 +67,11 @@ def strip_prefix_if_present(state_dict, prefix):
         return state_dict
     stripped_state_dict = OrderedDict()
     for key, value in state_dict.items():
+        if (key == "module.roi_heads.box.predictor.cls_score.weight" \
+                or key == "module.roi_heads.box.predictor.cls_score.bias" \
+                or key == "module.roi_heads.box.predictor.bbox_pred.weight" \
+                or key == "module.roi_heads.box.predictor.bbox_pred.bias"):
+            continue
         stripped_state_dict[key.replace(prefix, "")] = value
     return stripped_state_dict
 

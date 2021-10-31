@@ -1,7 +1,7 @@
 DATASET:
   NAME: "vg"
   MODE: "benchmark"
-  PATH: "datasets/vg_bm"
+  PATH: "/media/2T/lizeng/caption/data/vg_bm/repo/scene-graph-TF-release/data_tools/DIOR"
   TRAIN_BATCH_SIZE: 2
   TEST_BATCH_SIZE: 1
 MODEL:
@@ -11,9 +11,9 @@ MODEL:
   BACKBONE:
     CONV_BODY: "R-101-C4"
   ROI_BOX_HEAD:
-    NUM_CLASSES: 151
+    NUM_CLASSES: 21
   ROI_RELATION_HEAD:
-    NUM_CLASSES: 51
+    NUM_CLASSES: 16
 SOLVER:
   BASE_LR: 5e-3
   MAX_ITER: 100000

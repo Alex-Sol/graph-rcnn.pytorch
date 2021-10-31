@@ -167,9 +167,10 @@ def get_save_dir(cfg):
         'BatchSize_{}'.format(cfg.DATASET.TRAIN_BATCH_SIZE),
         'Base_LR_{}'.format(cfg.SOLVER.BASE_LR)
         )
-    if not os.path.exists(os.path.join("checkpoints", outdir)):
-        os.makedirs(os.path.join("checkpoints", outdir))
-    return os.path.join("checkpoints", outdir)
+    save_dir = os.path.join(cfg.SOLVER.SAVE_DIR, outdir)
+    if not os.path.exists(save_dir):
+        os.makedirs(save_dir)
+    return save_dir
 
 def build_scene_parser(cfg):
     return SceneParser(cfg)

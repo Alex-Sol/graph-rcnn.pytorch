@@ -25,6 +25,7 @@ class SceneGraphGeneration:
         """
         self.cfg = cfg
         self.arguments = arguments.copy()
+        self.arguments["epoch"] = cfg.epoch
         self.device = torch.device("cuda")
 
         # build data loader
@@ -115,62 +116,66 @@ class SceneGraphGeneration:
         main body for training scene graph generation model
         """
         start_iter = self.arguments["iteration"]
+        max_epoch = self.arguments["epoch"]
         logger = logging.getLogger("scene_graph_generation.trainer")
         logger.info("Start training")
         meters = MetricLogger(delimiter="  ")
-        max_iter = len(self.data_loader_train)
+        max_iter = len(self.data_loader_train.dataset)
         self.scene_parser.train()
         start_training_time = time.time()
         end = time.time()
-        for i, data in enumerate(self.data_loader_train, start_iter):
-            data_time = time.time() - end
-            self.arguments["iteration"] = i
-            self.sp_scheduler.step()
-            imgs, targets, _ = data
-            imgs = imgs.to(self.device); targets = [target.to(self.device) for target in targets]
-            loss_dict = self.scene_parser(imgs, targets)
-            losses = sum(loss for loss in loss_dict.values())
+        for epoch in range(max_epoch):
+            for i, data in enumerate(self.data_loader_train, start_iter):
+                data_time = time.time() - end
+                self.arguments["iteration"] = i
+                self.sp_scheduler.step()
+                imgs, targets, _ = data
+                imgs = imgs.to(self.device); targets = [target.to(self.device) for target in targets]
+                loss_dict = self.scene_parser(imgs, targets)
+                losses = sum(loss for loss in loss_dict.values())
 
-            # reduce losses over all GPUs for logging purposes
-            loss_dict_reduced = loss_dict
-            losses_reduced = sum(loss for loss in loss_dict_reduced.values())
-            meters.update(loss=losses_reduced, **loss_dict_reduced)
+                # reduce losses over all GPUs for logging purposes
+                loss_dict_reduced = loss_dict
+                losses_reduced = sum(loss for loss in loss_dict_reduced.values())
+                meters.update(loss=losses_reduced, **loss_dict_reduced)
 
-            self.sp_optimizer.zero_grad()
-            losses.backward()
-            self.sp_optimizer.step()
+                self.sp_optimizer.zero_grad()
+                losses.backward()
+                self.sp_optimizer.step()
 
-            batch_time = time.time() - end
-            end = time.time()
-            meters.update(time=batch_time, data=data_time)
+                batch_time = time.time() - end
+                end = time.time()
+                meters.update(time=batch_time, data=data_time)
 
-            eta_seconds = meters.time.global_avg * (max_iter - i)
-            eta_string = str(datetime.timedelta(seconds=int(eta_seconds)))
+                eta_seconds = meters.time.global_avg * (max_iter - i)
+                eta_string = str(datetime.timedelta(seconds=int(eta_seconds)))
 
-            if i % 20 == 0 or i == max_iter:
-                logger.info(
-                    meters.delimiter.join(
-                        [
-                            "model: {tag}",
-                            "eta: {eta}",
-                            "iter: {iter}/{max_iter}",
-                            "{meters}",
-                            "lr: {lr:.6f}",
-                            "max mem: {memory:.0f}",
-                        ]
-                    ).format(
-                        tag="scene_parser",
-                        eta=eta_string,
-                        iter=i, max_iter=max_iter,
-                        meters=str(meters),
-                        lr=self.sp_optimizer.param_groups[0]["lr"],
-                        memory=torch.cuda.max_memory_allocated() / 1024.0 / 1024.0,
+                if i % 20 == 0 or i == max_iter:
+                    logger.info(
+                        meters.delimiter.join(
+                            [
+                                "model: {tag}",
+                                "eta: {eta}",
+                                "epoch: {epo}",
+                                "iter: {iter}/{max_iter}",
+                                "{meters}",
+                                "lr: {lr:.6f}",
+                                "max mem: {memory:.0f}",
+                            ]
+                        ).format(
+                            tag="scene_parser",
+                            eta=eta_string,
+                            epo=epoch,
+                            iter=i, max_iter=max_iter,
+                            meters=str(meters),
+                            lr=self.sp_optimizer.param_groups[0]["lr"],
+                            memory=torch.cuda.max_memory_allocated() / 1024.0 / 1024.0,
+                        )
                     )
-                )
-            if (i + 1) % self.cfg.SOLVER.CHECKPOINT_PERIOD == 0:
-                self.sp_checkpointer.save("checkpoint_{:07d}".format(i), **self.arguments)
-            if (i + 1) == max_iter:
-                self.sp_checkpointer.save("checkpoint_final", **self.arguments)
+                if (i) % self.cfg.SOLVER.CHECKPOINT_PERIOD == 0:
+                    self.sp_checkpointer.save("checkpoint_{:02d}_{:07d}".format(epoch, i), **self.arguments)
+                if (i + 1) == max_iter:
+                    self.sp_checkpointer.save("checkpoint_final", **self.arguments)
 
     def _accumulate_predictions_from_multiple_gpus(self, predictions_per_gpu):
         all_predictions = all_gather(predictions_per_gpu)

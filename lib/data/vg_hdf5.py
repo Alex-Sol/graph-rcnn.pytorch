@@ -14,7 +14,7 @@ from lib.utils.box import bbox_overlaps
 
 class vg_hdf5(Dataset):
     def __init__(self, cfg, split="train", transforms=None, num_im=-1, num_val_im=5000,
-            filter_duplicate_rels=True, filter_non_overlap=True, filter_empty_rels=True):
+            filter_duplicate_rels=True, filter_non_overlap=False, filter_empty_rels=True):
         assert split == "train" or split == "test", "split must be one of [train, val, test]"
         assert num_im >= -1, "the number of samples must be >= 0"
 
@@ -26,13 +26,13 @@ class vg_hdf5(Dataset):
         self.filter_non_overlap = filter_non_overlap
         self.filter_duplicate_rels = filter_duplicate_rels and self.split == 'train'
 
-        self.roidb_file = os.path.join(self.data_dir, "VG-SGG.h5")
-        self.image_file = os.path.join(self.data_dir, "imdb_1024.h5")
+        self.roidb_file = os.path.join(self.data_dir, "dior.h5")
+        self.image_file = os.path.join(self.data_dir, "imdb_800.h5")
         # read in dataset from a h5 file and a dict (json) file
         assert os.path.exists(self.data_dir), \
             "cannot find folder {}, please download the visual genome data into this folder".format(self.data_dir)
         self.im_h5 = h5py.File(self.image_file, 'r')
-        self.info = json.load(open(os.path.join(self.data_dir, "VG-SGG-dicts.json"), 'r'))
+        self.info = json.load(open(os.path.join(self.data_dir, "dior-dicts.json"), 'r'))
         self.im_refs = self.im_h5['images'] # image data reference
         im_scale = self.im_refs.shape[2]
 
@@ -227,7 +227,7 @@ def load_graphs(graphs_file, images_file, mode='train', num_im=-1, num_val_im=0,
 
     # Get box information
     all_labels = roi_h5['labels'][:, 0]
-    all_boxes = roi_h5['boxes_{}'.format(1024)][:]  # will index later
+    all_boxes = roi_h5['boxes_{}'.format(800)][:]  # will index later
     assert np.all(all_boxes[:, :2] >= 0)  # sanity check
     assert np.all(all_boxes[:, 2:] > 0)  # no empty box
 

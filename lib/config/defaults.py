@@ -10,10 +10,10 @@ _C = CN()
 _C.DATASET = CN()
 _C.DATASET.NAME = "vg"
 _C.DATASET.MODE = "benchmark"                    # dataset mode, benchmark | 1600-400-400 | 2500-600-400, etc
-_C.DATASET.PATH = "datasets/vg_bm"
+_C.DATASET.PATH = "/media/2T/lizeng/caption/data/vg_bm/repo/scene-graph-TF-release/data_tools/DIOR"
 _C.DATASET.LOADER = 'object'                     # which kind of data loader to use, object | object+attribute | object+attribute+relationship
-_C.DATASET.TRAIN_BATCH_SIZE = 4
-_C.DATASET.TEST_BATCH_SIZE = 4
+_C.DATASET.TRAIN_BATCH_SIZE = 128
+_C.DATASET.TEST_BATCH_SIZE =128
 _C.DATASET.SIZE_DIVISIBILITY = 32
 _C.DATASET.ASPECT_RATIO_GROUPING = True
 _C.DATASET.IND_TO_OBJECT = ""
@@ -160,7 +160,7 @@ _C.MODEL.ROI_BOX_HEAD.PREDICTOR = "FastRCNNPredictor"
 _C.MODEL.ROI_BOX_HEAD.POOLER_RESOLUTION = 14
 _C.MODEL.ROI_BOX_HEAD.POOLER_SAMPLING_RATIO = 0
 _C.MODEL.ROI_BOX_HEAD.POOLER_SCALES = (1.0 / 16,)
-_C.MODEL.ROI_BOX_HEAD.NUM_CLASSES = 81
+_C.MODEL.ROI_BOX_HEAD.NUM_CLASSES = 21
 # Hidden layer dimension when using an MLP for the RoI box head
 _C.MODEL.ROI_BOX_HEAD.MLP_HEAD_DIM = 1024
 # GN
@@ -178,7 +178,7 @@ _C.MODEL.ROI_RELATION_HEAD.PREDICTOR = "FastRCNNRelationPredictor"
 _C.MODEL.ROI_RELATION_HEAD.POOLER_RESOLUTION = 14
 _C.MODEL.ROI_RELATION_HEAD.POOLER_SAMPLING_RATIO = 0
 _C.MODEL.ROI_RELATION_HEAD.POOLER_SCALES = (1.0 / 16,)
-_C.MODEL.ROI_RELATION_HEAD.NUM_CLASSES = 81
+_C.MODEL.ROI_RELATION_HEAD.NUM_CLASSES = 16
 _C.MODEL.ROI_RELATION_HEAD.TRIPLETS_PER_IMG = 100
 
 # Hidden layer dimension when using an MLP for the RoI box head
@@ -240,7 +240,7 @@ _C.MODEL.RESNETS.DEFORMABLE_GROUPS = 1
 _C.MODEL.RETINANET = CN()
 
 # This is the number of foreground classes and background.
-_C.MODEL.RETINANET.NUM_CLASSES = 81
+_C.MODEL.RETINANET.NUM_CLASSES = 21
 
 # Anchor aspect ratios to use
 _C.MODEL.RETINANET.ANCHOR_SIZES = (32, 64, 128, 256, 512)
@@ -393,5 +393,6 @@ _C.SOLVER.CHECKPOINT_PERIOD = 2500
 # This is global, so if we have 8 GPUs and IMS_PER_BATCH = 16, each GPU will
 # see 2 images per batch
 _C.SOLVER.IMS_PER_BATCH = 16
+_C.SOLVER.SAVE_DIR = "/media/2T/lizeng/caption/SGG/checkpoints"
 
 _C.PATHS_CATALOG = os.path.join(os.path.dirname(__file__), "paths_catalog.py")

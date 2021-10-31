@@ -211,7 +211,7 @@ class ROIRelationHead(torch.nn.Module):
             loss_obj_classifier = self.loss_evaluator.obj_classification_loss(proposals, [obj_class_logits])
 
         if self.cfg.MODEL.USE_RELPN:
-            idx = obj_class_labels[rel_inds[:, 0]] * 151 + obj_class_labels[rel_inds[:, 1]]
+            idx = obj_class_labels[rel_inds[:, 0]] * 16 + obj_class_labels[rel_inds[:, 1]]
             freq_prior = self.freq_dist.view(-1, 51)[idx].cuda()
             loss_pred_classifier = self.relpn.pred_classification_loss([pred_class_logits], freq_prior=freq_prior)
             return (

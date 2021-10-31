@@ -67,6 +67,7 @@ def overlay_class_names(image, predictions, categories):
     template = "{}: {:.2f}"
     for box, score, label in zip(boxes, scores, labels):
         x, y = box[:2]
+        x, y = int(x.item()), int(y.item())
         s = template.format(label, score)
         cv2.putText(
             image, s, (x, y), cv2.FONT_HERSHEY_SIMPLEX, .5, (255, 255, 255), 1
