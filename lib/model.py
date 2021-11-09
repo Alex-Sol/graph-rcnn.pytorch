@@ -263,7 +263,6 @@ class SceneGraphGeneration:
                     "y": int(bbox[1])
                 })
 
-            pair_prediction.extra_fields["idx_pairs"] = pair_prediction.extra_fields["idx_pairs"].numpy()
             sort_index = np.argsort(pair_prediction.extra_fields["idx_pairs"], axis=0)[:, 1]
             for index in range(len(pair_prediction.extra_fields["idx_pairs"])):
                 index = sort_index[index]
@@ -342,7 +341,7 @@ class SceneGraphGeneration:
             if self.cfg.instance > 0 and i > self.cfg.instance:
                 break
         if cfg.save_results:
-            save_path = "results/results.json"
+            save_path = "results/sgg_results.json"
             with open(save_path, 'w') as f:
                 json.dump(results, f, indent=4)
         synchronize()
