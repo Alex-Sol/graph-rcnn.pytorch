@@ -5,6 +5,7 @@ import time
 import numpy as np
 import torch
 import cv2
+import json
 from .data.build import build_data_loader
 from .scene_parser.parser import build_scene_parser
 from .scene_parser.parser import build_scene_parser_optimizer
@@ -210,7 +211,83 @@ class SceneGraphGeneration:
             result = overlay_class_names(result, top_prediction, dataset.ind_to_classes)
             cv2.imwrite(os.path.join(visualize_folder, "detection_{}.jpg".format(img_ids[i])), result)
 
-    def test(self, timer=None, visualize=False):
+    def save_results(self, image_ids, targets, bbox_predictions, pair_predictions, dataset, results):
+        ind_to_classes = dataset.ind_to_classes
+        ind_to_relation = dataset.ind_to_predicates
+        for i in range(len(bbox_predictions)):
+            image_id = image_ids[i]
+            target = targets[i]
+            bbox_prediction = bbox_predictions[i]
+            pair_prediction = pair_predictions[i]
+            results[image_id] = {
+                "gt_objects": [],
+                "gt_relations": [],
+                "pred_objects": [],
+                "pred_relations": []
+            }
+            for index in range(len(target.bbox)):
+                bbox = target.bbox[index]
+                cls_index = int(target.extra_fields["labels"][index])
+                results[image_id]["gt_objects"].append({
+                    "object_id": index,
+                    "name": ind_to_classes[cls_index],
+                    "w": int(bbox[2] - bbox[0]),
+                    "h": int(bbox[3] - bbox[1]),
+                    "x": int(bbox[0]),
+                    "y": int(bbox[1])
+                })
+
+            for index in range(len(target.extra_fields["relation_labels"])):
+                relation = target.extra_fields["relation_labels"][index]
+                results[image_id]["gt_relations"].append({
+                    "subject":{
+                        "object_id": int(relation[1]),
+                        "name": ind_to_classes[target.extra_fields["labels"][relation[1]]]
+                    },
+                    "relation": ind_to_relation[relation[2]],
+                    "object": {
+                        "object_id": int(relation[0]),
+                        "name": ind_to_classes[target.extra_fields["labels"][relation[0]]]
+                    }
+                })
+
+            for index in range(len(bbox_prediction.bbox)):
+                bbox = bbox_prediction.bbox[index]
+                cls_index = int(bbox_prediction.extra_fields["labels"][index])
+                results[image_id]["pred_objects"].append({
+                    "object_id": index,
+                    "name": ind_to_classes[cls_index],
+                    "w": int(bbox[2] - bbox[0]),
+                    "h": int(bbox[3] - bbox[1]),
+                    "x": int(bbox[0]),
+                    "y": int(bbox[1])
+                })
+
+            pair_prediction.extra_fields["idx_pairs"] = pair_prediction.extra_fields["idx_pairs"].numpy()
+            sort_index = np.argsort(pair_prediction.extra_fields["idx_pairs"], axis=0)[:, 1]
+            for index in range(len(pair_prediction.extra_fields["idx_pairs"])):
+                index = sort_index[index]
+                relation_scores = pair_prediction.extra_fields["scores"][index]
+                relation_name = ind_to_relation[int(relation_scores.argmax())]
+                subject_index = int(pair_prediction.extra_fields["idx_pairs"][index][1])
+                object_index = int(pair_prediction.extra_fields["idx_pairs"][index][0])
+                results[image_id]["pred_relations"].append({
+                    "subject": {
+                        "object_id": subject_index,
+                        "name": ind_to_classes[bbox_prediction.extra_fields["labels"][subject_index]]
+                    },
+                    "relation_pred": relation_name,
+                    "object": {
+                        "object_id": object_index,
+                        "name": ind_to_classes[bbox_prediction.extra_fields["labels"][object_index]]
+                    }
+                })
+        return results
+
+
+
+
+    def test(self, cfg, timer=None, visualize=False):
         """
         main body for testing scene graph generation model
         """
@@ -226,6 +303,8 @@ class SceneGraphGeneration:
         inference_timer = Timer()
         total_timer.tic()
         reg_recalls = []
+        if cfg.save_results:
+            results = {}
         for i, data in enumerate(self.data_loader_test, 0):
             imgs, targets, image_ids = data
             imgs = imgs.to(self.device); targets = [target.to(self.device) for target in targets]
@@ -247,6 +326,9 @@ class SceneGraphGeneration:
                 output = [o.to(cpu_device) for o in output]
                 if visualize:
                     self.visualize_detection(self.data_loader_test.dataset, image_ids, imgs, output)
+                if cfg.save_results:
+                    results = self.save_results(image_ids, targets, output, output_pred, self.data_loader_test.dataset, results)
+
             results_dict.update(
                 {img_id: result for img_id, result in zip(image_ids, output)}
             )
@@ -259,6 +341,10 @@ class SceneGraphGeneration:
                 )
             if self.cfg.instance > 0 and i > self.cfg.instance:
                 break
+        if cfg.save_results:
+            save_path = "results/results.json"
+            with open(save_path, 'w') as f:
+                json.dump(results, f, indent=4)
         synchronize()
         total_time = total_timer.toc()
         total_time_str = get_time_str(total_time)

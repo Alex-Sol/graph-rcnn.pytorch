@@ -35,7 +35,7 @@ def test(cfg, args, model=None):
         arguments = {}
         arguments["iteration"] = 0
         model = build_model(cfg, arguments, args.local_rank, args.distributed)
-    model.test(visualize=args.visualize)
+    model.test(cfg, visualize=args.visualize)
 
 def main():
     ''' parse config file '''
@@ -43,9 +43,9 @@ def main():
     parser.add_argument("--config-file", default="configs/sgg_res101_joint.yaml")
     parser.add_argument("--local_rank", type=int, default=1)
     parser.add_argument("--session", type=int, default=0)
-    parser.add_argument("--resume", type=int, default=0)
+    parser.add_argument("--resume", type=int, default=1)
     parser.add_argument("--batchsize", type=int, default=0)
-    parser.add_argument("--inference", action='store_true', default=False)
+    parser.add_argument("--inference", action='store_true', default=True)
     parser.add_argument("--instance", type=int, default=-1)
     parser.add_argument("--use_freq_prior", action='store_true')
     parser.add_argument("--visualize", action='store_true', default=True)

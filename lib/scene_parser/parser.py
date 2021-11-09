@@ -42,6 +42,7 @@ class SceneParser(GeneralizedRCNN):
                 param.requires_grad = False
 
     def train(self):
+        torch.cuda.empty_cache()
         if self.cfg.MODEL.BACKBONE.FREEZE_PARAMETER:
             self.backbone.eval()
         else:

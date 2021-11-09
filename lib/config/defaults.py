@@ -60,7 +60,7 @@ _C.MODEL.BACKBONE = CN()  # Backbone options
 _C.MODEL.BACKBONE.CONV_BODY = "R-50-C4" # The backbone conv body to use # (e.g., 'FPN.add_fpn_ResNet101_conv5_body' to specify a ResNet-101-FPN backbone)
 _C.MODEL.BACKBONE.FREEZE_CONV_BODY_AT = 2 # Add StopGrad at a specified stage so the bottom layers are frozen
 _C.MODEL.BACKBONE.OUT_CHANNELS = 256 * 4
-_C.MODEL.BACKBONE.FREEZE_PARAMETER = False
+_C.MODEL.BACKBONE.FREEZE_PARAMETER = True
 
 _C.MODEL.FPN = CN() # FPN options
 _C.MODEL.FPN.USE_GN = False
@@ -117,7 +117,7 @@ _C.MODEL.RPN.FPN_POST_NMS_PER_BATCH = True
 # Custom rpn head, empty to use default conv or separable conv
 _C.MODEL.RPN.RPN_HEAD = "SingleConvRPNHead"
 
-_C.MODEL.RPN.FREEZE_PARAMETER = False
+_C.MODEL.RPN.FREEZE_PARAMETER = True
 
 # ---------------------------------------------------------------------------- #
 # ROI HEADS options
@@ -169,7 +169,7 @@ _C.MODEL.ROI_BOX_HEAD.USE_GN = False
 _C.MODEL.ROI_BOX_HEAD.DILATION = 1
 _C.MODEL.ROI_BOX_HEAD.CONV_HEAD_DIM = 256
 _C.MODEL.ROI_BOX_HEAD.NUM_STACKED_CONVS = 4
-_C.MODEL.ROI_BOX_HEAD.FREEZE_PARAMETER = False
+_C.MODEL.ROI_BOX_HEAD.FREEZE_PARAMETER = True
 
 ''''''
 _C.MODEL.ROI_RELATION_HEAD = CN()
@@ -393,6 +393,6 @@ _C.SOLVER.CHECKPOINT_PERIOD = 2500
 # This is global, so if we have 8 GPUs and IMS_PER_BATCH = 16, each GPU will
 # see 2 images per batch
 _C.SOLVER.IMS_PER_BATCH = 16
-_C.SOLVER.SAVE_DIR = "/media/2T/lizeng/caption/SGG/checkpoints"
+_C.SOLVER.SAVE_DIR = "/media/2T/lizeng/caption/SGG/checkpoints/sgg"
 
 _C.PATHS_CATALOG = os.path.join(os.path.dirname(__file__), "paths_catalog.py")
