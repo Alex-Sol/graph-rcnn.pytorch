@@ -134,6 +134,9 @@ class SceneParser(GeneralizedRCNN):
                     relation_features = x
                 # During training, self.box() will return the unaltered proposals as "detections"
                 # this makes the API consistent during training and testing
+                if self.cfg.featureExtract:
+                    result = self.rel_heads(relation_features, detections, targets)
+                    return result
                 x_pairs, detection_pairs, rel_heads_loss = self.rel_heads(relation_features, detections, targets)
                 scene_parser_losses.update(rel_heads_loss)
 

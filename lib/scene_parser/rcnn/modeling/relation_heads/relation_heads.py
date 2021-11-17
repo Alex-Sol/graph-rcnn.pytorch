@@ -154,6 +154,9 @@ class ROIRelationHead(torch.nn.Module):
             for proposal, target_feature in zip(targets_cp, target_features):
                 proposal.add_field("features", self.box_avgpool(target_feature))
             proposals_gt = self.box_post_processor((class_logits, box_regression), targets_cp, skip_nms=True)
+            bbox_feature = proposals_gt[0].extra_fields['features']
+            return bbox_feature
+
 
 
 

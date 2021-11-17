@@ -56,6 +56,7 @@ def main():
     parser.add_argument("--save_results", action='store_true', default=True)
     parser.add_argument("--epoch", type=int, default=100)
     parser.add_argument("--featureExtract", type=bool, default=True)
+    parser.add_argument("--featureExtractPath", type=str, default="")
     args = parser.parse_args()
 
     gpu_ids = "0"
@@ -75,6 +76,7 @@ def main():
     cfg.inference = args.inference
     cfg.epoch = args.epoch
     cfg.featureExtract = args.featureExtract
+    cfg.featureExtractPath = args.featureExtractPath
     cfg.save_results = args.save_results
     cfg.MODEL.USE_FREQ_PRIOR = args.use_freq_prior
     cfg.MODEL.ALGORITHM = args.algorithm

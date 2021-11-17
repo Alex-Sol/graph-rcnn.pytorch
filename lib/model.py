@@ -1,5 +1,6 @@
 import os
 import datetime
+import h5py
 import logging
 import time
 import numpy as np
@@ -301,94 +302,40 @@ class SceneGraphGeneration:
         reg_recalls = []
         if cfg.save_results:
             results = {}
+
+
+        boxes = []
+        features = []
+        height = []
+        image_id = []
+        num_boxes = []
+        width = []
         for i, data in enumerate(self.data_loader_test, 0):
             imgs, targets, image_ids = data
             imgs = imgs.to(self.device); targets = [target.to(self.device) for target in targets]
             if i % 10 == 0:
                 logger.info("inference on batch {}/{}...".format(i, len(self.data_loader_test)))
             with torch.no_grad():
-                if timer:
-                    timer.tic()
                 output = self.scene_parser(imgs, targets)
-                if self.cfg.MODEL.RELATION_ON:
-                    output, output_pred = output
-                    output_pred = [o.to(cpu_device) for o in output_pred]
-                ious = bbox_overlaps(targets[0].bbox, output[0].bbox)
-                reg_recall = (ious.max(1)[0] > 0.5).sum().item() / ious.shape[0]
-                reg_recalls.append(reg_recall)
-                if timer:
-                    torch.cuda.synchronize()
-                    timer.toc()
-                output = [o.to(cpu_device) for o in output]
-                if visualize:
-                    self.visualize_detection(self.data_loader_test.dataset, image_ids, imgs, output)
-                if cfg.save_results:
-                    results = self.save_results(image_ids, targets, output, output_pred, self.data_loader_test.dataset, results)
-
-            results_dict.update(
-                {img_id: result for img_id, result in zip(image_ids, output)}
-            )
-            targets_dict.update(
-                {img_id: target for img_id, target in zip(image_ids, targets)}
-            )
-            if self.cfg.MODEL.RELATION_ON:
-                results_pred_dict.update(
-                    {img_id: result for img_id, result in zip(image_ids, output_pred)}
-                )
-            if self.cfg.instance > 0 and i > self.cfg.instance:
-                break
-        if cfg.save_results:
-            save_path = "results/sgg_results.json"
-            with open(save_path, 'w') as f:
-                json.dump(results, f, indent=4)
-        synchronize()
-        total_time = total_timer.toc()
-        total_time_str = get_time_str(total_time)
-        num_devices = get_world_size()
-        logger.info(
-            "Total run time: {} ({} s / img per device, on {} devices)".format(
-                total_time_str, total_time * num_devices / len(self.data_loader_test.dataset), num_devices
-            )
-        )
-        total_infer_time = get_time_str(inference_timer.total_time)
-        logger.info(
-            "Model inference time: {} ({} s / img per device, on {} devices)".format(
-                total_infer_time,
-                inference_timer.total_time * num_devices / len(self.data_loader_test.dataset),
-                num_devices,
-            )
-        )
-        predictions = self._accumulate_predictions_from_multiple_gpus(results_dict)
-        if self.cfg.MODEL.RELATION_ON:
-            predictions_pred = self._accumulate_predictions_from_multiple_gpus(results_pred_dict)
-        if not is_main_process():
-            return
-
-        output_folder = "results"
-        if output_folder:
-            if not os.path.exists(output_folder):
-                os.mkdir(output_folder)
-            torch.save(predictions, os.path.join(output_folder, "predictions.pth"))
-            if self.cfg.MODEL.RELATION_ON:
-                torch.save(predictions_pred, os.path.join(output_folder, "predictions_pred.pth"))
-
-        extra_args = dict(
-            box_only=False if self.cfg.MODEL.RETINANET_ON else self.cfg.MODEL.RPN_ONLY,
-            iou_types=("bbox",),
-            expected_results=self.cfg.TEST.EXPECTED_RESULTS,
-            expected_results_sigma_tol=self.cfg.TEST.EXPECTED_RESULTS_SIGMA_TOL,
-        )
-        eval_det_results = evaluate(dataset=self.data_loader_test.dataset,
-                        predictions=predictions,
-                        output_folder=output_folder,
-                        **extra_args)
-
-        if self.cfg.MODEL.RELATION_ON:
-            eval_sg_results = evaluate_sg(dataset=self.data_loader_test.dataset,
-                            predictions=predictions,
-                            predictions_pred=predictions_pred,
-                            output_folder=output_folder,
-                            **extra_args)
+            num_boxes.append(len(targets[0].bbox))
+            width.append(targets[0].size[0])
+            height.append(targets[0].size[1])
+            image_id.append(image_ids[0])
+            box = []
+            feature = []
+            dim_feature = len(output[0])
+            for index_box in range(len(targets[0].bbox)):
+                box.extend(targets[0].bbox[index_box].tolist())
+                feature.extend(output[index_box].reshape(dim_feature).tolist())
+            boxes.append(box)
+            features.append(feature)
+        f = h5py.File(os.path.join(self.cfg.featureExtractPath, "dior_feature_gt.h5"), 'w')
+        f.create_dataset('boxes', data=boxes)
+        f.create_dataset('features', data=features)
+        f.create_dataset('height', data=height)
+        f.create_dataset('image_id', data=image_id)
+        f.create_dataset('num_boxes', data=num_boxes)
+        f.create_dataset('width', data=width)
 
 
     def test(self, cfg, timer=None, visualize=False):
