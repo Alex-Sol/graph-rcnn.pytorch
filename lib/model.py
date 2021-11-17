@@ -310,11 +310,11 @@ class SceneGraphGeneration:
         image_id = []
         num_boxes = []
         width = []
-        for i, data in enumerate(self.data_loader_test, 0):
+        for i, data in enumerate(self.data_loader_train, 0):
             imgs, targets, image_ids = data
             imgs = imgs.to(self.device); targets = [target.to(self.device) for target in targets]
             if i % 10 == 0:
-                logger.info("inference on batch {}/{}...".format(i, len(self.data_loader_test)))
+                logger.info("inference on batch {}/{}... on train dataset".format(i, len(self.data_loader_train.dataset)))
             with torch.no_grad():
                 output = self.scene_parser(imgs, targets)
             num_boxes.append(len(targets[0].bbox))
@@ -329,13 +329,52 @@ class SceneGraphGeneration:
                 feature.extend(output[index_box].reshape(dim_feature).tolist())
             boxes.append(box)
             features.append(feature)
-        f = h5py.File(os.path.join(self.cfg.featureExtractPath, "dior_feature_gt.h5"), 'w')
+
+        f = h5py.File(os.path.join(self.cfg.featureExtractPath, "dior_feature_train_gt.h5"), 'w')
         f.create_dataset('boxes', data=boxes)
         f.create_dataset('features', data=features)
         f.create_dataset('height', data=height)
         f.create_dataset('image_id', data=image_id)
         f.create_dataset('num_boxes', data=num_boxes)
         f.create_dataset('width', data=width)
+        logger.info("Finished saving features of boxes in train dataset into h5 file")
+        print("/n")
+
+        boxes = []
+        features = []
+        height = []
+        image_id = []
+        num_boxes = []
+        width = []
+        for i, data in enumerate(self.data_loader_test, 0):
+            imgs, targets, image_ids = data
+            imgs = imgs.to(self.device); targets = [target.to(self.device) for target in targets]
+            if i % 10 == 0:
+                logger.info("inference on batch {}/{}... on test dataset".format(i, len(self.data_loader_test.dataset)))
+            with torch.no_grad():
+                output = self.scene_parser(imgs, targets)
+            num_boxes.append(len(targets[0].bbox))
+            width.append(targets[0].size[0])
+            height.append(targets[0].size[1])
+            image_id.append(image_ids[0])
+            box = []
+            feature = []
+            dim_feature = len(output[0])
+            for index_box in range(len(targets[0].bbox)):
+                box.extend(targets[0].bbox[index_box].tolist())
+                feature.extend(output[index_box].reshape(dim_feature).tolist())
+            boxes.append(box)
+            features.append(feature)
+
+        f = h5py.File(os.path.join(self.cfg.featureExtractPath, "dior_feature_test_gt.h5"), 'w')
+        f.create_dataset('boxes', data=boxes)
+        f.create_dataset('features', data=features)
+        f.create_dataset('height', data=height)
+        f.create_dataset('image_id', data=image_id)
+        f.create_dataset('num_boxes', data=num_boxes)
+        f.create_dataset('width', data=width)
+        logger.info("Finished saving features of boxes in test dataset into h5 file")
+        print("/n")
 
 
     def test(self, cfg, timer=None, visualize=False):
