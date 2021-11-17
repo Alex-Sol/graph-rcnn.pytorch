@@ -35,7 +35,10 @@ def test(cfg, args, model=None):
         arguments = {}
         arguments["iteration"] = 0
         model = build_model(cfg, arguments, args.local_rank, args.distributed)
-    model.test(cfg, visualize=args.visualize)
+    if cfg.featureExtract:
+        model.featureExtractor(cfg)
+    else:
+        model.test(cfg, visualize=args.visualize)
 
 def main():
     ''' parse config file '''
@@ -52,6 +55,7 @@ def main():
     parser.add_argument("--algorithm", type=str, default='sg_baseline')
     parser.add_argument("--save_results", action='store_true', default=True)
     parser.add_argument("--epoch", type=int, default=100)
+    parser.add_argument("--featureExtract", type=bool, default=True)
     args = parser.parse_args()
 
     gpu_ids = "0"
@@ -70,6 +74,7 @@ def main():
     cfg.instance = args.instance
     cfg.inference = args.inference
     cfg.epoch = args.epoch
+    cfg.featureExtract = args.featureExtract
     cfg.save_results = args.save_results
     cfg.MODEL.USE_FREQ_PRIOR = args.use_freq_prior
     cfg.MODEL.ALGORITHM = args.algorithm

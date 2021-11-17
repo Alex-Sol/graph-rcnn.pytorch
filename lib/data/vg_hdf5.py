@@ -21,6 +21,7 @@ class vg_hdf5(Dataset):
         # split = 'train' if split == 'test' else 'test'
         self.data_dir = cfg.DATASET.PATH
         self.transforms = transforms
+        self.featureExtract = cfg.featureExtract
 
         self.split = split
         self.filter_non_overlap = filter_non_overlap
@@ -49,7 +50,7 @@ class vg_hdf5(Dataset):
                                   self.predicate_to_ind[k])
         # cfg.ind_to_predicate = self.ind_to_predicates
 
-        self.split_mask, self.image_index, self.im_sizes, self.gt_boxes, self.gt_classes, self.relationships = load_graphs(
+        self.split_mask, self.image_index, self.image_ids_original, self.im_sizes, self.gt_boxes, self.gt_classes, self.relationships = load_graphs(
             self.roidb_file, self.image_file,
             self.split, num_im, num_val_im=num_val_im,
             filter_empty_rels=filter_empty_rels,
@@ -136,6 +137,9 @@ class vg_hdf5(Dataset):
         target.add_field("pred_labels", torch.from_numpy(obj_relations))
         target.add_field("relation_labels", torch.from_numpy(obj_relation_triplets))
         target = target.clip_to_image(remove_empty=False)
+
+        if self.featureExtract:
+            return img, target, self.image_ids_original[self.image_index[index]]
 
         return img, target, index
 
@@ -251,6 +255,7 @@ def load_graphs(graphs_file, images_file, mode='train', num_im=-1, num_val_im=0,
 
     # Get everything by image.
     im_sizes = []
+    image_ids_original = roi_h5['image_ids']
     image_index_valid = []
     boxes = []
     gt_classes = []
@@ -287,4 +292,4 @@ def load_graphs(graphs_file, images_file, mode='train', num_im=-1, num_val_im=0,
         relationships.append(rels)
 
     im_sizes = np.stack(im_sizes, 0)
-    return split_mask, image_index_valid, im_sizes, boxes, gt_classes, relationships
+    return split_mask, image_index_valid, image_ids_original, im_sizes, boxes, gt_classes, relationships
