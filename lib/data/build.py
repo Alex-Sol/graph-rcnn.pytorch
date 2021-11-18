@@ -64,7 +64,8 @@ def build_data_loader(cfg, split="train", num_im=-1, is_distributed=False, start
             print("images_per_batch: {}, num_gpus: {}".format(images_per_batch, num_gpus))
         images_per_gpu = images_per_batch // num_gpus if split == "train" else images_per_batch
         start_iter = start_iter if split == "train" else 0
-        num_iters = cfg.SOLVER.MAX_ITER if split == "train" else None
+        # num_iters = cfg.SOLVER.MAX_ITER if split == "train" else None
+        num_iters = None
         aspect_grouping = [1] if cfg.DATASET.ASPECT_RATIO_GROUPING else []
         batch_sampler = make_batch_data_sampler(
             dataset, sampler, aspect_grouping, images_per_gpu, num_iters, start_iter

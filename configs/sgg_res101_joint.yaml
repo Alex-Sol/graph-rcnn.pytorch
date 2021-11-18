@@ -1,7 +1,7 @@
 DATASET:
   NAME: "vg"
   MODE: "benchmark"
-  TRAIN_BATCH_SIZE: 2
+  TRAIN_BATCH_SIZE: 1
   TEST_BATCH_SIZE: 1
 MODEL:
   WEIGHT_IMG: "/media/2T/lizeng/caption/SGG/checkpoints/ObjectDetection/vg_benchmark_object/R-101-C4/sg_baseline_joint_0/BatchSize_2/Base_LR_0.005/checkpoint_final.pth"
