@@ -353,7 +353,7 @@ class SceneGraphGeneration:
             imgs, targets, image_ids = data
             imgs = imgs.to(self.device); targets = [target.to(self.device) for target in targets]
             if i % 10 == 0:
-                logger.info("inference on batch {}/{}... on test dataset".format(i, len(self.data_loader_train)))
+                logger.info("inference on batch {}/{}... on train dataset".format(i, len(self.data_loader_train)))
             with torch.no_grad():
                 output = self.scene_parser(imgs, targets)
             num_boxes[i] = len(targets[0].bbox)
